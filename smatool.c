@@ -1486,10 +1486,8 @@ int main(int argc, char **argv) {
 						break;
 
 					case 12: // $TIMESTRING
-						for (i = 0; i < 25; i++) {
-							fl[cc] = timestr[i];
-							cc++;
-						}
+						cc += add_to_send_string(fl, cc, timestr,
+								sizeof(timestr));
 						break;
 
 					case 13: // $TIMEFROM1
@@ -1635,10 +1633,8 @@ int main(int argc, char **argv) {
 						break;
 
 					case 21: // $UNKNOWN
-						for (i = 0; i < 4; i++) {
-							fl[cc] = conf.InverterCode[i];
-							cc++;
-						}
+						cc += add_to_send_string(fl, cc, conf.InverterCode,
+								sizeof(conf.InverterCode));
 						break;
 
 					case 22: // $INVCODE
@@ -1660,10 +1656,8 @@ int main(int argc, char **argv) {
 						cc += 2;
 						break;
 					case 27: // $TIMESET unknown setting
-						for (i = 0; i < 4; i++) {
-							fl[cc] = timeset[i];
-							cc++;
-						}
+						cc += add_to_send_string(fl, cc, timeset,
+								sizeof(timeset));
 						break;
 
 					default:
