@@ -1170,6 +1170,13 @@ size_t write_data(void *ptr, size_t size, size_t nmemb, void *stream) {
 	return written;
 }
 
+FILE* open_script_file(const ConfType* conf ) {
+	if (strlen(conf->File) > 0)
+		return fopen(conf->File, "r");
+	else
+		return fopen("/etc/sma.in", "r");
+}
+
 int main(int argc, char **argv) {
 	FILE *scriptfile_fp;
 	unsigned char * last_sent;
@@ -1276,10 +1283,7 @@ int main(int argc, char **argv) {
 		if (verbose == 1)
 			printf("Address %s\n", conf.BTAddress);
 
-		if (strlen(conf.File) > 0)
-			scriptfile_fp = fopen(conf.File, "r");
-		else
-			scriptfile_fp = fopen("/etc/sma.in", "r");
+		scriptfile_fp = open_script_file(&conf);
 
 		for (i = 1; i < 20; i++) {
 			// allocate a socket
