@@ -814,18 +814,13 @@ time_t ConvertStreamtoTime(unsigned char * stream, int length, time_t * value) {
 
 // Set switches to save lots of strcmps
 void SetSwitches(ConfType *conf, char * datefrom, char * dateto, int *location,
-		int *post, int *file, int *daterange, int *test) {
+		int *post, int *daterange, int *test) {
 	//Check if all location variables are set
 	if ((conf->latitude_f <= 180) && (conf->longitude_f <= 180))
 		(*location) = 1;
 	else
 		(*location) = 0;
 
-	//Check if all File variables are set
-	if (strlen(conf->File) > 0)
-		(*file) = 1;
-	else
-		(*file) = 0;
 	//Check if all PVOutput variables are set
 	if ((strlen(conf->PVOutputURL) > 0) && (strlen(conf->PVOutputKey) > 0)
 			&& (strlen(conf->PVOutputSid) > 0))
@@ -1192,7 +1187,7 @@ int main(int argc, char **argv) {
 	int archdatalen = 0;
 	int failedbluetooth = 0;
 	int terminated = 0;
-	int s, i, j, status, post = 0, repost = 0, test = 0, file = 0,
+	int s, i, j, status, post = 0, repost = 0, test = 0,
 			daterange = 0;
 	int install = 0, update = 0, already_read = 0;
 	int location = 0, error = 0;
@@ -1263,7 +1258,7 @@ int main(int argc, char **argv) {
 	if (GetInverterSetting(&conf) < 0)
 		exit(-1);
 	// set switches used through the program
-	SetSwitches(&conf, datefrom, dateto, &location, &post, &file, &daterange,
+	SetSwitches(&conf, datefrom, dateto, &location, &post, &daterange,
 			&test);
 
 	// Set value for inverter type
@@ -1281,7 +1276,7 @@ int main(int argc, char **argv) {
 		if (verbose == 1)
 			printf("Address %s\n", conf.BTAddress);
 
-		if (file == 1)
+		if (strlen(conf.File) > 0)
 			scriptfile_fp = fopen(conf.File, "r");
 		else
 			scriptfile_fp = fopen("/etc/sma.in", "r");
