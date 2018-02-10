@@ -1201,6 +1201,16 @@ int bt_connect(const ConfType* conf, struct sockaddr_rc* bt_addr,
 	return is_connected;
 }
 
+void convert_bt_address_to_array(unsigned char bt_address[6], ConfType* conf) {
+	// convert address
+	bt_address[5] = conv(strtok(conf->BTAddress, ":"));
+	bt_address[4] = conv(strtok(NULL, ":"));
+	bt_address[3] = conv(strtok(NULL, ":"));
+	bt_address[2] = conv(strtok(NULL, ":"));
+	bt_address[1] = conv(strtok(NULL, ":"));
+	bt_address[0] = conv(strtok(NULL, ":"));
+}
+
 int main(int argc, char **argv) {
 	FILE *scriptfile_fp;
 	unsigned char * last_sent;
@@ -1230,7 +1240,7 @@ int main(int argc, char **argv) {
 	char dateto[100];
 	int pass_i;
 	char line[400];
-	unsigned char address[6] = { 0 };
+	unsigned char bt_address[6] = { 0 };
 	unsigned char address2[6] = { 0 };
 	unsigned char timestr[25] = { 0 };
 	unsigned char serial[4] = { 0 };
@@ -1318,12 +1328,7 @@ int main(int argc, char **argv) {
 	}
 
 	// convert address
-	address[5] = conv(strtok(conf.BTAddress, ":"));
-	address[4] = conv(strtok(NULL, ":"));
-	address[3] = conv(strtok(NULL, ":"));
-	address[2] = conv(strtok(NULL, ":"));
-	address[1] = conv(strtok(NULL, ":"));
-	address[0] = conv(strtok(NULL, ":"));
+	convert_bt_address_to_array(bt_address, &conf);
 
 	while (!feof(scriptfile_fp)) {
 		start: if (fgets(line, 400, scriptfile_fp) != NULL) {//read line from sma.in
@@ -1341,7 +1346,7 @@ int main(int argc, char **argv) {
 
 					case 1: // $ADDR
 						for (i = 0; i < 6; i++) {
-							fl[cc] = address[i];
+							fl[cc] = bt_address[i];
 							cc++;
 						}
 						break;
@@ -1412,7 +1417,7 @@ int main(int argc, char **argv) {
 
 					case 1: // $ADDR
 						for (i = 0; i < 6; i++) {
-							fl[cc] = address[i];
+							fl[cc] = bt_address[i];
 							cc++;
 						}
 						break;
