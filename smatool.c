@@ -1211,6 +1211,21 @@ void convert_bt_address_to_array(unsigned char bt_address[6], ConfType* conf) {
 	bt_address[0] = conv(strtok(NULL, ":"));
 }
 
+int add_to_send_string( unsigned char *send_string, int current_pos,
+		unsigned char *data_array, int count ) {
+
+	for (int i = 0; i < count; i++) {
+		send_string[current_pos+i] = data_array[i];
+	}
+
+	return count;
+}
+
+int add_char_to_send_string(unsigned char *send_string, int current_pos, unsigned char chr) {
+	send_string[cc] = chr;
+	return 1;
+}
+
 int main(int argc, char **argv) {
 	FILE *scriptfile_fp;
 	unsigned char * last_sent;
@@ -1345,34 +1360,24 @@ int main(int argc, char **argv) {
 						break;
 
 					case 1: // $ADDR
-						for (i = 0; i < 6; i++) {
-							fl[cc] = bt_address[i];
-							cc++;
-						}
+						cc += add_to_send_string( fl, cc, bt_address, sizeof(bt_address));
 						break;
 
 					case 3: // $SER
-						for (i = 0; i < 4; i++) {
-							fl[cc] = serial[i];
-							cc++;
-						}
+						cc += add_to_send_string(fl, cc, serial, sizeof(serial));
 						break;
 
 					case 7: // $ADD2
-						for (i = 0; i < 6; i++) {
-							fl[cc] = address2[i];
-							cc++;
-						}
+						cc += add_to_send_string( fl, cc, address2, sizeof(address2));
 						break;
 
 					case 8: // $CHAN
-						fl[cc] = chan[0];
-						cc++;
+						cc += add_to_send_string(fl, cc, chan, sizeof(chan));
 						break;
 
 					default:
-						fl[cc] = conv(lineread);
-						cc++;
+						cc += add_char_to_send_string(fl, cc, conv(lineread));
+						break;
 					}
 
 				} while (strcmp(lineread, "$END"));
