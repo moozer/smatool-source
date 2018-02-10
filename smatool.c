@@ -626,166 +626,6 @@ unsigned char *  get_timezone_in_seconds( unsigned char *tzhex )
    return tzhex;
 }
 
-char *  sunrise( float latitude, float longitude )
-{
-   //adapted from http://williams.best.vwh.net/sunrise_sunset_algorithm.htm
-   time_t curtime;
-   struct tm *loctime;
-   struct tm *utctime;
-   int day,month,year,hour,minute;
-   char *returntime;
-
-   double t,M,L,T,RA,Lquadrant,RAquadrant,sinDec,cosDec;
-   double cosH, H, UT, localT,lngHour;
-   float localOffset,zenith=91;
-   double pi=M_PI;
-
-   returntime = (char *)malloc(6*sizeof(char));
-   curtime = time(NULL);  //get time in seconds since epoch (1/1/1970)	
-   loctime = localtime(&curtime);
-   day = loctime->tm_mday;
-   month = loctime->tm_mon +1;
-   year = loctime->tm_year + 1900;
-   hour = loctime->tm_hour;
-   minute = loctime->tm_min; 
-   utctime = gmtime(&curtime);
-   
-
-   if( debug == 1 ) printf( "utc=%04d-%02d-%02d %02d:%02d local=%04d-%02d-%02d %02d:%02d diff %d hours\n", utctime->tm_year+1900, utctime->tm_mon+1,utctime->tm_mday,utctime->tm_hour,utctime->tm_min, year, month, day, hour, minute, hour-utctime->tm_hour );
-   localOffset=(hour-utctime->tm_hour)+(minute-utctime->tm_min)/60;
-   if( debug == 1 ) printf( "localOffset=%f\n", localOffset );
-   if(( year > utctime->tm_year+1900 )||( month > utctime->tm_mon+1 )||( day > utctime->tm_mday ))
-      localOffset+=24;
-   if(( year < utctime->tm_year+1900 )||( month < utctime->tm_mon+1 )||( day < utctime->tm_mday ))
-      localOffset-=24;
-   if( debug == 1 ) printf( "localOffset=%f\n", localOffset );
-   lngHour = longitude / 15;
-   t = loctime->tm_yday + ((6 - lngHour) / 24);
-   //Calculate the Sun's mean anomaly
-   M = (0.9856 * t) - 3.289;
-   //Calculate the Sun's tru longitude
-   L = M + (1.916 * sin((pi/180)*M)) + (0.020 * sin(2 * (pi/180)*M)) + 282.634;
-   if( L > 360 ) L=L-360;
-   if( L < 0 ) L=L+360;
-   //calculate the Sun's right ascension
-   RA = (180/pi)*atan(0.91764 * tan((pi/180)*L));
-   //right ascension value needs to be in the same quadrant as L
-   Lquadrant  = (floor( L/90)) * 90;
-   RAquadrant = (floor(RA/90)) * 90;
-    
-   RA = RA + (Lquadrant - RAquadrant);
-   //right ascension value needs to be converted into hours
-   RA = RA / 15;
-   //calculate the Sun's declination
-   sinDec = 0.39782 * sin((pi/180)*L);
-   cosDec = cos(asin(sinDec));
-   //calculate the Sun's local hour angle
-   cosH = (cos((pi/180)*zenith) - (sinDec * sin((pi/180)*latitude))) / (cosDec * cos((pi/180)*latitude));
-	
-   if (cosH >  1) 
-      printf( "Sun never rises here!\n" );
-	  //the sun never rises on this location (on the specified date)
-   if (cosH < -1)
-      printf( "Sun never sets here!\n" );
-	  //the sun never sets on this location (on the specified date)
-   //finish calculating H and convert into hours
-   H = 360 -(180/pi)*acos(cosH);
-   H = H/15;
-   //calculate local mean time of rising/setting
-   T = H + RA - (0.06571 * t) - 6.622;
-   //adjust back to UTC
-   UT = T - lngHour;
-   if( UT < 0 ) UT=UT+24;
-   if( UT > 24 ) UT=UT-24;
-   day = loctime->tm_mday;
-   month = loctime->tm_mon +1;
-   year = loctime->tm_year + 1900;
-   hour = loctime->tm_hour;
-   minute = loctime->tm_min; 
-   //convert UT value to local time zone of latitude/longitude
-   localT = UT + localOffset;
-   if( localT < 0 ) localT=localT+24;
-   if( localT > 24 ) localT=localT-24;
-   sprintf( returntime, "%02.0f:%02.0f",floor(localT),floor((localT-floor(localT))*60) );
-   return returntime;
-}
-
-char * sunset( float latitude, float longitude )
-{
-   //adapted from http://williams.best.vwh.net/sunrise_sunset_algorithm.htm
-   time_t curtime;
-   struct tm *loctime;
-   struct tm *utctime;
-   int day,month,year,hour,minute;
-   char *returntime;
-
-   double t,M,L,T,RA,Lquadrant,RAquadrant,sinDec,cosDec;
-   double cosH, H, UT, localT,lngHour;
-   float localOffset,zenith=91;
-   double pi=M_PI;
-
-   returntime = (char *)malloc(6*sizeof(char));
-
-   curtime = time(NULL);  //get time in seconds since epoch (1/1/1970)	
-   loctime = localtime(&curtime);
-   day = loctime->tm_mday;
-   month = loctime->tm_mon +1;
-   year = loctime->tm_year + 1900;
-   hour = loctime->tm_hour;
-   minute = loctime->tm_min; 
-   utctime = gmtime(&curtime);
-   
-
-   localOffset=(hour-utctime->tm_hour)+(minute-utctime->tm_min)/60;
-   if(( year > utctime->tm_year+1900 )||( month > utctime->tm_mon+1 )||( day > utctime->tm_mday ))
-      localOffset+=24;
-   if(( year < utctime->tm_year+1900 )||( month < utctime->tm_mon+1 )||( day < utctime->tm_mday ))
-      localOffset-=24;
-
-   lngHour = longitude / 15;
-   t = loctime->tm_yday + ((18 - lngHour) / 24);
-   //Calculate the Sun's mean anomaly
-   M = (0.9856 * t) - 3.289;
-   //Calculate the Sun's tru longitude
-   L = M + (1.916 * sin((pi/180)*M)) + (0.020 * sin(2 * (pi/180)*M)) + 282.634;
-   if( L > 360 ) L=L-360;
-   if( L < 0 ) L=L+360;
-   //calculate the Sun's right ascension
-   RA = (180/pi)*atan(0.91764 * tan((pi/180)*L));
-   //right ascension value needs to be in the same quadrant as L
-   Lquadrant  = (floor( L/90)) * 90;
-   RAquadrant = (floor(RA/90)) * 90;
-    
-   RA = RA + (Lquadrant - RAquadrant);
-   //right ascension value needs to be converted into hours
-   RA = RA / 15;
-   //calculate the Sun's declination
-   sinDec = 0.39782 * sin((pi/180)*L);
-   cosDec = cos(asin(sinDec));
-   //calculate the Sun's local hour angle
-   cosH = (cos((pi/180)*zenith) - (sinDec * sin((pi/180)*latitude))) / (cosDec * cos((pi/180)*latitude));
-	
-   if (cosH >  1); 
-	  //the sun never rises on this location (on the specified date)
-   if (cosH < -1);
-	  //the sun never sets on this location (on the specified date)
-   //finish calculating H and convert into hours
-   H = (180/pi)*acos(cosH);
-   H = H/15;
-   //calculate local mean time of rising/setting
-   T = H + RA - (0.06571 * t) - 6.622;
-   //adjust back to UTC
-   UT = T - lngHour;
-   if( UT > 24 ) UT=UT-24;
-   if( UT < 0 ) UT=UT+24;
-   //convert UT value to local time zone of latitude/longitude
-   localT = UT + localOffset;
-   if( localT < 0 ) localT=localT+24;
-   if( localT > 24 ) localT=localT-24;
-   sprintf( returntime, "%02.0f:%02.0f",floor(localT),floor((localT-floor(localT))*60) );
-   return returntime;
-}
-
 
 int auto_set_dates( ConfType * conf, int * daterange, char * datefrom, char * dateto )
 /*  If there are no dates set - get last updated date and go from there to NOW */
@@ -1278,7 +1118,6 @@ void PrintHelp()
     printf( "  -t,  --timeout TIMEOUT                   bluetooth timeout (secs) default 5\n" );
     printf( "  -p,  --password PASSWORD                 inverter user password default 0000\n" );
     printf( "  -f,  --file FILENAME                     command file default sma.in.new\n" );
-    printf( "Location Information to calculate sunset and sunrise so inverter is not\n" );
     printf( "queried in the dark\n" );
     printf( "  -lat,  --latitude LATITUDE               location latitude -180 to 180 deg\n" );
     printf( "  -lon,  --longitude LONGITUDE             location longitude -90 to 90 deg\n" );
@@ -1498,8 +1337,6 @@ int main(int argc, char **argv)
       float  accum_value;
       float  current_value;
    } *archdatalist;
-
-    char sunrise_time[6],sunset_time[6];
 
     memset(received,0,1024);
     last_sent = (unsigned  char *)malloc( sizeof( unsigned char ));
