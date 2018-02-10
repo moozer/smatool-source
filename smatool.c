@@ -787,11 +787,9 @@ char * sunset( float latitude, float longitude )
 }
 
 
-int auto_set_dates( ConfType * conf, int * daterange, int mysql, char * datefrom, char * dateto )
+int auto_set_dates( ConfType * conf, int * daterange, char * datefrom, char * dateto )
 /*  If there are no dates set - get last updated date and go from there to NOW */
 {
-    //MYSQL_ROW 	row;
-    //char 	SQLQUERY[200];
     time_t  	curtime;
     int 	day,month,year,hour,minute,second;
     struct tm 	*loctime;
@@ -1030,16 +1028,13 @@ time_t ConvertStreamtoTime( unsigned char * stream, int length, time_t * value )
 }
 
 // Set switches to save lots of strcmps
-void  SetSwitches( ConfType *conf, char * datefrom, char * dateto, int *location, int *mysql, int *post, int *file, int *daterange, int *test )  
+void  SetSwitches( ConfType *conf, char * datefrom, char * dateto, int *location, int *post, int *file, int *daterange, int *test )
 {
     //Check if all location variables are set
     if(( conf->latitude_f <= 180 )&&( conf->longitude_f <= 180 ))
         (*location)=1;
     else
         (*location)=0;
-    //Check if all Mysql variables are set
-    // CLENAUP: always set to 0
-    (*mysql)=0;
     
     //Check if all File variables are set
     if( strlen(conf->File) > 0 )
@@ -1454,7 +1449,7 @@ int main(int argc, char **argv)
         int archdatalen=0;
         int failedbluetooth=0;
         int terminated=0;
-	int s,i,j,status,mysql=0,post=0,repost=0,test=0,file=0,daterange=0;
+	int s,i,j,status,post=0,repost=0,test=0,file=0,daterange=0;
         int install=0, update=0, already_read=0;
         int location=0, error=0;
 	int ret,found,crc_at_end, finished=0;
@@ -1526,8 +1521,7 @@ int main(int argc, char **argv)
     if( GetInverterSetting( &conf ) < 0 )
         exit(-1);
     // set switches used through the program
-    SetSwitches( &conf, datefrom, dateto, &location, &mysql, &post, &file, &daterange, &test );  
-    mysql = 0; // CLEANUP
+    SetSwitches( &conf, datefrom, dateto, &location, &post, &file, &daterange, &test );
 
     // Set value for inverter type
     //SetInverterType( &conf );
@@ -1537,10 +1531,10 @@ int main(int argc, char **argv)
     get_timezone_in_seconds( tzhex );
 
     if(daterange==0 ) //auto set the dates
-        auto_set_dates( &conf, &daterange, mysql, datefrom, dateto );
+        auto_set_dates( &conf, &daterange, datefrom, dateto );
     else
         if( verbose == 1 ) printf( "QUERY RANGE    from %s to %s\n", datefrom, dateto ); 
-    if(( daterange==1 )&&(mysql==0))
+    if( daterange==1 )
     {
 	if (verbose ==1) printf("Address %s\n",conf.BTAddress);
 
