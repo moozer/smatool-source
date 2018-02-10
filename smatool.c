@@ -1446,8 +1446,7 @@ int main(int argc, char **argv) {
 							ti[1] = tt[i];
 							ti[0] = tt[i - 1];
 							ti[2] = '\0';
-							fl[cc] = conv(ti);
-							cc++;
+							cc += add_char_to_send_string(fl, cc, conv(ti));
 						}
 						break;
 
@@ -1458,8 +1457,7 @@ int main(int argc, char **argv) {
 							ti[1] = tt[i];
 							ti[0] = tt[i - 1];
 							ti[2] = '\0';
-							fl[cc] = conv(ti);
-							cc++;
+							cc += add_char_to_send_string(fl, cc, conv(ti));
 						}
 						break;
 
@@ -1470,8 +1468,7 @@ int main(int argc, char **argv) {
 							ti[1] = tt[i];
 							ti[0] = tt[i - 1];
 							ti[2] = '\0';
-							fl[cc] = conv(ti);
-							cc++;
+							cc += add_char_to_send_string(fl, cc, conv(ti));
 						}
 						break;
 
@@ -1521,8 +1518,7 @@ int main(int argc, char **argv) {
 							ti[1] = tt[i];
 							ti[0] = tt[i - 1];
 							ti[2] = '\0';
-							fl[cc] = conv(ti);
-							cc++;
+							cc += add_char_to_send_string(fl, cc, conv(ti));
 						}
 						break;
 
@@ -1554,8 +1550,7 @@ int main(int argc, char **argv) {
 							ti[1] = tt[i];
 							ti[0] = tt[i - 1];
 							ti[2] = '\0';
-							fl[cc] = conv(ti);
-							cc++;
+							cc += add_char_to_send_string(fl, cc, conv(ti));
 						}
 						break;
 
@@ -1584,8 +1579,7 @@ int main(int argc, char **argv) {
 							ti[1] = tt[i];
 							ti[0] = tt[i - 1];
 							ti[2] = '\0';
-							fl[cc] = conv(ti);
-							cc++;
+							cc += add_char_to_send_string(fl, cc, conv(ti));
 						}
 						break;
 
@@ -1612,8 +1606,7 @@ int main(int argc, char **argv) {
 							ti[1] = tt[i];
 							ti[0] = tt[i - 1];
 							ti[2] = '\0';
-							fl[cc] = conv(ti);
-							cc++;
+							cc += add_char_to_send_string(fl, cc, conv(ti));
 						}
 						break;
 
@@ -1622,13 +1615,12 @@ int main(int argc, char **argv) {
 						j = 0;
 						for (i = 0; i < 12; i++) {
 							if (conf.Password[j] == '\0')
-								fl[cc] = 0x88;
+								cc += add_char_to_send_string(fl, cc, 0x88);
 							else {
 								pass_i = conf.Password[j];
-								fl[cc] = ((pass_i + 0x88) % 0xff);
+								cc += add_char_to_send_string(fl, cc, ((pass_i + 0x88) % 0xff));
 								j++;
 							}
-							cc++;
 						}
 						break;
 
@@ -1638,22 +1630,17 @@ int main(int argc, char **argv) {
 						break;
 
 					case 22: // $INVCODE
-						fl[cc] = invcode;
-						cc++;
+						cc += add_char_to_send_string(fl, cc, invcode);
 						break;
 					case 23: // $ARCHCODE
-						fl[cc] = conf.ArchiveCode;
-						cc++;
+						cc += add_char_to_send_string(fl, cc, conf.ArchiveCode);
 						break;
 					case 25: // $CNT send counter
 						send_count++;
-						fl[cc] = send_count;
-						cc++;
+						cc += add_char_to_send_string(fl, cc, send_count);
 						break;
 					case 26: // $TIMEZONE timezone in seconds, reverse endian
-						fl[cc] = tzhex[0];
-						fl[cc + 1] = tzhex[1];
-						cc += 2;
+						cc += add_to_send_string(fl, cc, tzhex, sizeof(tzhex));
 						break;
 					case 27: // $TIMESET unknown setting
 						cc += add_to_send_string(fl, cc, timeset,
@@ -1661,8 +1648,7 @@ int main(int argc, char **argv) {
 						break;
 
 					default:
-						fl[cc] = conv(lineread);
-						cc++;
+						cc += add_char_to_send_string(fl, cc, conv(lineread));
 					}
 
 				} while (strcmp(lineread, "$END"));
