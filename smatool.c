@@ -1421,24 +1421,15 @@ int main(int argc, char **argv) {
 						break;
 
 					case 1: // $ADDR
-						for (i = 0; i < 6; i++) {
-							fl[cc] = bt_address[i];
-							cc++;
-						}
+						cc += add_to_send_string( fl, cc, bt_address, sizeof(bt_address));
 						break;
 
 					case 3: // $SER
-						for (i = 0; i < 4; i++) {
-							fl[cc] = serial[i];
-							cc++;
-						}
+						cc += add_to_send_string(fl, cc, serial, sizeof(serial));
 						break;
 
 					case 7: // $ADD2
-						for (i = 0; i < 6; i++) {
-							fl[cc] = address2[i];
-							cc++;
-						}
+						cc += add_to_send_string( fl, cc, address2, sizeof(address2));
 						break;
 
 					case 2: // $TIME
@@ -1484,8 +1475,7 @@ int main(int argc, char **argv) {
 						break;
 
 					case 8: // $CHAN
-						fl[cc] = chan[0];
-						cc++;
+						cc += add_to_send_string(fl, cc, chan, sizeof(chan));
 						break;
 
 					case 12: // $TIMESTRING
