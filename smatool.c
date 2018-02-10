@@ -1176,7 +1176,7 @@ size_t write_data(void *ptr, size_t size, size_t nmemb, void *stream) {
 }
 
 int main(int argc, char **argv) {
-	FILE *fp;
+	FILE *scriptfile_fp;
 	unsigned char * last_sent;
 	ConfType conf;
 	ReturnType *returnkeylist;
@@ -1282,9 +1282,10 @@ int main(int argc, char **argv) {
 			printf("Address %s\n", conf.BTAddress);
 
 		if (file == 1)
-			fp = fopen(conf.File, "r");
+			scriptfile_fp = fopen(conf.File, "r");
 		else
-			fp = fopen("/etc/sma.in", "r");
+			scriptfile_fp = fopen("/etc/sma.in", "r");
+
 		for (i = 1; i < 20; i++) {
 			// allocate a socket
 			s = socket(AF_BLUETOOTH, SOCK_STREAM, BTPROTO_RFCOMM);
@@ -1314,8 +1315,8 @@ int main(int argc, char **argv) {
 		address[1] = conv(strtok(NULL, ":"));
 		address[0] = conv(strtok(NULL, ":"));
 
-		while (!feof(fp)) {
-			start: if (fgets(line, 400, fp) != NULL) {	//read line from sma.in
+		while (!feof(scriptfile_fp)) {
+			start: if (fgets(line, 400, scriptfile_fp) != NULL) {	//read line from sma.in
 				linenum++;
 				lineread = strtok(line, " ;");
 				if (!strcmp(lineread, "R")) {//See if line is something we need to receive
@@ -1368,7 +1369,7 @@ int main(int argc, char **argv) {
 								&& (read_bluetooth(&conf, &s, &rr, received, cc,
 										last_sent, &terminated) != 0)) {
 							already_read = 0;
-							fseek(fp, returnpos, 0);
+							fseek(scriptfile_fp, returnpos, 0);
 							linenum = returnline;
 							found = 0;
 							if (archdatalen > 0)
@@ -1794,7 +1795,7 @@ int main(int argc, char **argv) {
 							} else {
 								memcpy(timestr, received + 63, 24);
 								already_read = 0;
-								fseek(fp, returnpos, 0);
+								fseek(scriptfile_fp, returnpos, 0);
 								linenum = returnline;
 								found = 0;
 								if (archdatalen > 0)
@@ -1900,7 +1901,7 @@ int main(int argc, char **argv) {
 								else if (read_bluetooth(&conf, &s, &rr,
 										received, cc, last_sent, &terminated)
 										!= 0) {
-									fseek(fp, returnpos, 0);
+									fseek(scriptfile_fp, returnpos, 0);
 									linenum = returnline;
 									found = 0;
 									if (archdatalen > 0)
@@ -1993,12 +1994,12 @@ int main(int argc, char **argv) {
 				}
 				if (!strcmp(lineread, ":init")) {//See if line is something we need to extract
 					initstarted = 1;
-					returnpos = ftell(fp);
+					returnpos = ftell(scriptfile_fp);
 					returnline = linenum;
 				}
 				if (!strcmp(lineread, ":setup")) {//See if line is something we need to extract
 					setupstarted = 1;
-					returnpos = ftell(fp);
+					returnpos = ftell(scriptfile_fp);
 					returnline = linenum;
 				}
 				if (!strcmp(lineread, ":startsetup")) {	//See if line is something we need to extract
@@ -2006,12 +2007,12 @@ int main(int argc, char **argv) {
 				}
 				if (!strcmp(lineread, ":setinverter1")) {//See if line is something we need to extract
 					setupstarted = 1;
-					returnpos = ftell(fp);
+					returnpos = ftell(scriptfile_fp);
 					returnline = linenum;
 				}
 				if (!strcmp(lineread, ":getrangedata")) {//See if line is something we need to extract
 					rangedatastarted = 1;
-					returnpos = ftell(fp);
+					returnpos = ftell(scriptfile_fp);
 					returnline = linenum;
 				}
 			}
