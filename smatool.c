@@ -1017,7 +1017,6 @@ void PrintHelp() {
 	printf("Usage: smatool [OPTION]\n");
 	printf(
 			"  -v,  --verbose                           Give more verbose output\n");
-	printf("  -d,  --debug                             Show debug\n");
 	printf(
 			"  -c,  --config CONFIGFILE                 Set config file default smatool.conf\n");
 	printf(
@@ -1174,18 +1173,6 @@ size_t write_data(void *ptr, size_t size, size_t nmemb, void *stream) {
 
 	written = fwrite(ptr, size, nmemb, stream);
 	return written;
-}
-
-char * debugdate() {
-	time_t curtime;
-	struct tm *tm;
-	static char result[20];
-
-	curtime = time(NULL);  //get time in seconds since epoch (1/1/1970)
-	tm = localtime(&curtime);
-	sprintf(result, "%4d-%02d-%02d %02d:%02d:%02d", 1900 + tm->tm_year,
-			1 + tm->tm_mon, tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec);
-	return result;
 }
 
 int main(int argc, char **argv) {
