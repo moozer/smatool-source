@@ -77,7 +77,7 @@ char *accepted_strings[] = { "$END", "$ADDR", "$TIME", "$SER", "$CRC", "$POW",
 		"$TIMESET" /*Unknown string involved in time setting*/
 };
 
-int cc, debug = 0, verbose = 0;
+int cc, verbose = 0;
 unsigned char fl[1024] = { 0 };
 
 static u16 fcstab[256] = { 0x0000, 0x1189, 0x2312, 0x329b, 0x4624, 0x57ad,
@@ -171,14 +171,9 @@ void add_escapes(unsigned char *cp, int *len) {
 void fix_length_send(unsigned char *cp, int *len) {
 	int delta = 0;
 
-	if (debug == 1)
-		printf("sum=%x\n", cp[1] + cp[3]);
 	if ((cp[1] != (*len) + 1)) {
 		delta = (*len) + 1 - cp[1];
-		if (debug == 1) {
-			printf("  length change from %x to %x diff=%x \n", cp[1],
-					(*len) + 1, cp[1] + cp[3]);
-		}
+
 		cp[3] = (cp[1] + cp[3]) - ((*len) + 1);
 		cp[1] = (*len) + 1;
 
@@ -266,8 +261,7 @@ void fix_length_send(unsigned char *cp, int *len) {
 			getchar();
 			break;
 		}
-		if (debug == 1)
-			printf("new sum=%x\n", cp[1] + cp[3]);
+
 	}
 }
 
@@ -280,11 +274,7 @@ void fix_length_received(unsigned char *received, int *len) {
 
 	if (received[1] != (*len)) {
 		sum = received[1] + received[3];
-		if (debug == 1)
-			printf("sum=%x", sum);
 		delta = (*len) - received[1];
-		if (debug == 1)
-			printf("length change from %x to %x\n", received[1], (*len));
 		if ((received[3] != 0x13) && (received[3] != 0x14)) {
 			received[1] = (*len);
 			switch (received[1]) {
@@ -319,21 +309,11 @@ void tryfcs16(unsigned char *cp, int len) {
 
 	memcpy(stripped, cp, len);
 	/* add on output */
-	if (debug == 2) {
-		printf("String to calculate FCS\n");
-		for (i = 0; i < len; i++)
-			printf("%02x ", cp[i]);
-		printf("\n\n");
-	}
 	trialfcs = pppfcs16( PPPINITFCS16, stripped, len);
 	trialfcs ^= 0xffff; /* complement */
 	fl[cc] = (trialfcs & 0x00ff); /* least significant byte first */
 	fl[cc + 1] = ((trialfcs >> 8) & 0x00ff);
 	cc += 2;
-	if (debug == 2) {
-		printf("FCS = %x%x %x\n", (trialfcs & 0x00ff),
-				((trialfcs >> 8) & 0x00ff), trialfcs);
-	}
 }
 
 unsigned char conv(char *nn) {
@@ -405,8 +385,6 @@ int check_send_error(ConfType * conf, int *s, int *rr, unsigned char *received,
 		(*rr) = 0;
 		for (i = 0; i < sizeof(header); i++) {
 			received[(*rr)] = header[i];
-			if (debug == 1)
-				printf("%02x ", received[(*rr)]);
 			(*rr)++;
 		}
 	} else {
@@ -426,26 +404,6 @@ int check_send_error(ConfType * conf, int *s, int *rr, unsigned char *received,
 		return -1;
 	}
 	if (bytes_read > 0) {
-		if (debug == 1)
-			printf("\nReceiving\n");
-		if (debug == 1) {
-			printf("    %08x: .. .. .. .. .. .. .. .. .. .. .. .. ", 0);
-			j = 12;
-			for (i = 0; i < sizeof(header); i++) {
-				if (j % 16 == 0)
-					printf("\n    %08x: ", j);
-				printf("%02x ", header[i]);
-				j++;
-			}
-			for (i = 0; i < bytes_read; i++) {
-				if (j % 16 == 0)
-					printf("\n    %08x: ", j);
-				printf("%02x ", buf[i]);
-				j++;
-			}
-			printf(" rr=%d", (bytes_read + (*rr)));
-			printf("\n\n");
-		}
 		if ((cc == bytes_read) && (memcmp(received, last_sent, cc) == 0)) {
 			printf("ERROR received what we sent!");
 			getchar();
@@ -475,18 +433,9 @@ int check_send_error(ConfType * conf, int *s, int *rr, unsigned char *received,
 			} else {
 				received[(*rr)] = buf[i];
 			}
-			if (debug == 1)
-				printf("%02x ", received[(*rr)]);
 			(*rr)++;
 		}
 		fix_length_received(received, rr);
-		if (debug == 1) {
-			printf("\n");
-			for (i = 0; i < (*rr); i++)
-				printf("%02x ", received[(i)]);
-		}
-		if (debug == 1)
-			printf("\n\n");
 		(*already_read) = 1;
 	}
 	return 0;
@@ -516,8 +465,6 @@ int read_bluetooth(ConfType * conf, int *s, int *rr, unsigned char *received,
 		(*rr) = 0;
 		for (i = 0; i < sizeof(header); i++) {
 			received[(*rr)] = header[i];
-			if (debug == 2)
-				printf("%02x ", received[i]);
 			(*rr)++;
 		}
 	} else {
@@ -537,26 +484,6 @@ int read_bluetooth(ConfType * conf, int *s, int *rr, unsigned char *received,
 		return -1;
 	}
 	if (bytes_read > 0) {
-		if (debug == 1)
-			printf("\nReceiving\n");
-		if (debug == 1) {
-			printf("    %08x: .. .. .. .. .. .. .. .. .. .. .. .. ", 0);
-			j = 12;
-			for (i = 0; i < sizeof(header); i++) {
-				if (j % 16 == 0)
-					printf("\n    %08x: ", j);
-				printf("%02x ", header[i]);
-				j++;
-			}
-			for (i = 0; i < bytes_read; i++) {
-				if (j % 16 == 0)
-					printf("\n    %08x: ", j);
-				printf("%02x ", buf[i]);
-				j++;
-			}
-			printf(" rr=%d", (bytes_read + (*rr)));
-			printf("\n\n");
-		}
 		if ((cc == bytes_read) && (memcmp(received, last_sent, cc) == 0)) {
 			printf("ERROR received what we sent!");
 			getchar();
@@ -586,18 +513,9 @@ int read_bluetooth(ConfType * conf, int *s, int *rr, unsigned char *received,
 			} else {
 				received[(*rr)] = buf[i];
 			}
-			if (debug == 2)
-				printf("%02x ", received[(*rr)]);
 			(*rr)++;
 		}
 		fix_length_received(received, rr);
-		if (debug == 2) {
-			printf("\n");
-			for (i = 0; i < (*rr); i++)
-				printf("%02x ", received[(i)]);
-		}
-		if (debug == 1)
-			printf("\n\n");
 	}
 	return 0;
 }
@@ -633,34 +551,20 @@ unsigned char * get_timezone_in_seconds(unsigned char *tzhex) {
 	isdst = loctime->tm_isdst;
 	utctime = gmtime(&curtime);
 
-	if (debug == 1)
-		printf(
-				"utc=%04d-%02d-%02d %02d:%02d local=%04d-%02d-%02d %02d:%02d diff %d hours\n",
-				utctime->tm_year + 1900, utctime->tm_mon + 1, utctime->tm_mday,
-				utctime->tm_hour, utctime->tm_min, year, month, day, hour,
-				minute, hour - utctime->tm_hour);
 	localOffset = (hour - utctime->tm_hour) + (minute - utctime->tm_min) / 60;
-	if (debug == 1)
-		printf("localOffset=%f\n", localOffset);
 	if ((year > utctime->tm_year + 1900) || (month > utctime->tm_mon + 1)
 			|| (day > utctime->tm_mday))
 		localOffset += 24;
 	if ((year < utctime->tm_year + 1900) || (month < utctime->tm_mon + 1)
 			|| (day < utctime->tm_mday))
 		localOffset -= 24;
-	if (debug == 1)
-		printf("localOffset=%f isdst=%d\n", localOffset, isdst);
 	if (isdst > 0)
 		localOffset = localOffset - 1;
 	tzsecs = (localOffset) * 3600 + 1;
 	if (tzsecs < 0)
 		tzsecs = 65536 + tzsecs;
-	if (debug == 1)
-		printf("tzsecs=%x %d\n", tzsecs, tzsecs);
 	tzhex[1] = tzsecs / 256;
 	tzhex[0] = tzsecs - (tzsecs / 256) * 256;
-	if (debug == 1)
-		printf("tzsecs=%02x %02x\n", tzhex[1], tzhex[0]);
 
 	return tzhex;
 }
@@ -943,8 +847,6 @@ ReadStream(ConfType * conf, int * s, unsigned char * stream, int * streamlen,
 	int i, j = 0;
 
 	(*togo) = ConvertStreamtoInt(stream + 43, 2, togo);
-	if (debug == 1)
-		printf("togo=%d\n", (*togo));
 	i = 59; //Initial position of data stream
 	(*datalen) = 0;
 	datalist = (unsigned char *) malloc(sizeof(char));
@@ -974,12 +876,6 @@ ReadStream(ConfType * conf, int * s, unsigned char * stream, int * streamlen,
 			i = 18;
 		} else
 			finished = 1;
-	}
-	if (debug == 1) {
-		printf("len=%d data=", (*datalen));
-		for (i = 0; i < (*datalen); i++)
-			printf("%02x ", datalist[i]);
-		printf("\n");
 	}
 	return datalist;
 }
@@ -1030,8 +926,6 @@ int GetConfig(ConfType *conf) {
 			if (line[0] != '#') {
 				strcpy(value, ""); //Null out value
 				sscanf(line, "%s %s", variable, value);
-				if (debug == 1)
-					printf("variable=%s value=%s\n", variable, value);
 				if (value[0] != '\0') {
 					if (strcmp(variable, "Inverter") == 0)
 						strcpy(conf->Inverter, value);
@@ -1085,8 +979,6 @@ int GetInverterSetting(ConfType *conf) {
 			if (line[0] != '#') {
 				strcpy(value, ""); //Null out value
 				sscanf(line, "%s %s", variable, value);
-				if (debug == 1)
-					printf("variable=%s value=%s\n", variable, value);
 				if (value[0] != '\0') {
 					if (strcmp(variable, "Inverter") == 0) {
 						if (strcmp(value, conf->Inverter) == 0)
@@ -1161,7 +1053,7 @@ void PrintHelp() {
 
 /* Init Config to default values */
 int ReadCommandConfig(ConfType *conf, int argc, char **argv, char * datefrom,
-		char * dateto, int * verbose, int * debug, int * repost, int * test,
+		char * dateto, int * verbose, int * repost, int * test,
 		int * install, int * update) {
 	int i;
 
@@ -1170,9 +1062,6 @@ int ReadCommandConfig(ConfType *conf, int argc, char **argv, char * datefrom,
 			{
 		if ((strcmp(argv[i], "-v") == 0) || (strcmp(argv[i], "--verbose") == 0))
 			(*verbose) = 1;
-		else if ((strcmp(argv[i], "-d") == 0)
-				|| (strcmp(argv[i], "--debug") == 0))
-			(*debug) = 1;
 		else if ((strcmp(argv[i], "-c") == 0)
 				|| (strcmp(argv[i], "--config") == 0)) {
 			i++;
@@ -1373,14 +1262,14 @@ int main(int argc, char **argv) {
 	// set config to defaults
 	InitConfig(&conf, datefrom, dateto);
 	// read command arguments needed so can get config
-	if (ReadCommandConfig(&conf, argc, argv, datefrom, dateto, &verbose, &debug,
+	if (ReadCommandConfig(&conf, argc, argv, datefrom, dateto, &verbose,
 			&repost, &test, &install, &update) < 0)
 		exit(0);
 	// read Config file
 	if (GetConfig(&conf) < 0)
 		exit(-1);
 	// read command arguments  again - they overide config
-	if (ReadCommandConfig(&conf, argc, argv, datefrom, dateto, &verbose, &debug,
+	if (ReadCommandConfig(&conf, argc, argv, datefrom, dateto, &verbose,
 			&repost, &test, &install, &update) < 0)
 		exit(0);
 	// read Inverter Setting file
@@ -1419,9 +1308,6 @@ int main(int argc, char **argv) {
 			str2ba(conf.BTAddress, &addr.rc_bdaddr);
 
 			// connect to server
-			if (debug == 1) {
-				printf("datefrom=%s dateto=%s\n", datefrom, dateto);
-			}
 			status = connect(s, (struct sockaddr *) &addr, sizeof(addr));
 			if (status < 0) {
 				printf("Error connecting to %s\n", conf.BTAddress);
@@ -1446,9 +1332,6 @@ int main(int argc, char **argv) {
 				linenum++;
 				lineread = strtok(line, " ;");
 				if (!strcmp(lineread, "R")) {//See if line is something we need to receive
-					if (debug == 1)
-						printf("[%d] %s Waiting for string\n", linenum,
-								debugdate());
 					cc = 0;
 					do {
 						lineread = strtok(NULL, " ;");
@@ -1490,15 +1373,6 @@ int main(int argc, char **argv) {
 						}
 
 					} while (strcmp(lineread, "$END"));
-					if (debug == 1) {
-						printf("[%d] %s waiting for: ", linenum, debugdate());
-						for (i = 0; i < cc; i++)
-							printf("%02x ", fl[i]);
-						printf("\n\n");
-					}
-					if (debug == 1)
-						printf("[%d] %s Waiting for data on rfcomm\n", linenum,
-								debugdate());
 					found = 0;
 					do {
 						if (already_read == 0)
@@ -1521,41 +1395,14 @@ int main(int argc, char **argv) {
 							goto start;
 						} else {
 							already_read = 0;
-							if (debug == 1) {
-								printf("[%d] %s looking for: ", linenum,
-										debugdate());
-								for (i = 0; i < cc; i++)
-									printf("%02x ", fl[i]);
-								printf("\n");
-								printf("[%d] %s received:    ", linenum,
-										debugdate());
-								for (i = 0; i < rr; i++)
-									printf("%02x ", received[i]);
-								printf("\n\n");
-							}
 
 							if (memcmp(fl + 4, received + 4, cc - 4) == 0) {
 								found = 1;
-								if (debug == 1)
-									printf(
-											"[%d] %s Found string we are waiting for\n",
-											linenum, debugdate());
-							} else {
-								if (debug == 1)
-									printf("[%d] %s Did not find string\n",
-											linenum, debugdate());
 							}
 						}
 					} while (found == 0);
-					if (debug == 2) {
-						for (i = 0; i < cc; i++)
-							printf("%02x ", fl[i]);
-						printf("\n\n");
-					}
 				}
 				if (!strcmp(lineread, "S")) {//See if line is something we need to send
-					if (debug == 1)
-						printf("[%d] %s Sending\n", linenum, debugdate());
 					cc = 0;
 					do {
 						lineread = strtok(NULL, " ;");
@@ -1645,8 +1492,6 @@ int main(int argc, char **argv) {
 							if (daterange == 1) {
 								if (strptime(datefrom, "%Y-%m-%d %H:%M:%S", &tm)
 										== 0) {
-									if (debug == 1)
-										printf("datefrom %s\n", datefrom);
 									printf("Time Coversion Error\n");
 									error = 1;
 									exit(-1);
@@ -1682,8 +1527,6 @@ int main(int argc, char **argv) {
 							if (daterange == 1) {
 								if (strptime(dateto, "%Y-%m-%d %H:%M:%S", &tm)
 										== 0) {
-									if (debug == 1)
-										printf("dateto %s\n", dateto);
 									printf("Time Coversion Error\n");
 									error = 1;
 									exit(-1);
@@ -1824,21 +1667,7 @@ int main(int argc, char **argv) {
 						}
 
 					} while (strcmp(lineread, "$END"));
-					if (debug == 1) {
-						printf("[%d] %s sending:\n", linenum, debugdate());
-						printf("    %08x: .. .. .. .. .. .. .. .. .. .. .. .. ",
-								0);
-						j = 12;
-						for (i = 0; i < cc; i++) {
-							if (j % 16 == 0)
-								printf("\n    %08x: ", j);
-							printf("%02x ", fl[i]);
-							j++;
-						}
-						printf(" cc=%d", cc);
-						printf("\n\n");
-					}
-					last_sent = (unsigned char *) realloc(last_sent,
+				last_sent = (unsigned char *) realloc(last_sent,
 							sizeof(unsigned char) * (cc));
 					memcpy(last_sent, fl, cc);
 					write(s, fl, cc);
@@ -1847,8 +1676,6 @@ int main(int argc, char **argv) {
 				}
 
 				if (!strcmp(lineread, "E")) {//See if line is something we need to extract
-					if (debug == 1)
-						printf("[%d] %s Extracting\n", linenum, debugdate());
 					cc = 0;
 					do {
 						lineread = strtok(NULL, " ;");
@@ -1960,37 +1787,25 @@ int main(int argc, char **argv) {
 
 						case 7: // extract 2nd address
 							memcpy(address2, received + 26, 6);
-							if (debug == 1)
-								printf("address 2 \n");
 							break;
 
 						case 8: // extract bluetooth channel
 							memcpy(chan, received + 22, 1);
-							if (debug == 1)
-								printf("Bluetooth channel = %i\n", chan[0]);
 							break;
 
 						case 12: // extract time strings $TIMESTRING
 							if ((received[60] == 0x6d)
 									&& (received[61] == 0x23)) {
 								memcpy(timestr, received + 63, 24);
-								if (debug == 1)
-									printf("extracting timestring\n");
 								memcpy(timeset, received + 79, 4);
 								idate = ConvertStreamtoTime(received + 63, 4,
 										&idate);
 								/* Allow delay for inverter to be slow */
 								if (reporttime > idate) {
-									if (debug == 1)
-										printf("delay=%d\n",
-												(int) (reporttime - idate));
-									//sleep( reporttime - idate );
 									sleep(5); //was sleeping for > 1min excessive
 								}
 							} else {
 								memcpy(timestr, received + 63, 24);
-								if (debug == 1)
-									printf("bad extracting timestring\n");
 								already_read = 0;
 								fseek(fp, returnpos, 0);
 								linenum = returnline;
@@ -2125,16 +1940,11 @@ int main(int argc, char **argv) {
 							break;
 						case 22: // extract time strings $INVCODE
 							invcode = received[22];
-							if (debug == 1)
-								printf("extracting invcode=%02x\n", invcode);
-
 							break;
 						case 24: // Inverter data $INVERTERDATA
 							data = ReadStream(&conf, &s, received, &rr, data,
 									&datalen, last_sent, cc, &terminated,
 									&togo);
-							if (debug == 1)
-								printf("data=%02x\n", (data + 3)[0]);
 							if ((data + 3)[0] == 0x08)
 								gap = 40;
 							if ((data + 3)[0] == 0x10)
