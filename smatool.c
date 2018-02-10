@@ -1176,6 +1176,31 @@ FILE* open_script_file(const ConfType* conf) {
 		return fopen("/etc/sma.in", "r");
 }
 
+int bt_connect(const ConfType* conf, struct sockaddr_rc* bt_addr,
+		int* bt_socket ) {
+
+	int max_tries = 20;
+	int is_connected;
+
+	for (int i = 1; i < max_tries; i++) {
+		// allocate a socket
+		*bt_socket = socket(AF_BLUETOOTH, SOCK_STREAM, BTPROTO_RFCOMM);
+		// set the connection parameters (who to connect to)
+		bt_addr->rc_family = AF_BLUETOOTH;
+		bt_addr->rc_channel = (uint8_t) 1;
+		str2ba(conf->BTAddress, &bt_addr->rc_bdaddr);
+		// connect to server
+		is_connected = connect(*bt_socket, (struct sockaddr*) &*bt_addr,
+				sizeof(*bt_addr));
+		if (is_connected < 0) {
+			close(*bt_socket);
+		} else
+			break;
+	}
+
+	return is_connected;
+}
+
 int main(int argc, char **argv) {
 	FILE *scriptfile_fp;
 	unsigned char * last_sent;
@@ -1193,7 +1218,7 @@ int main(int argc, char **argv) {
 	int archdatalen = 0;
 	int failedbluetooth = 0;
 	int terminated = 0;
-	int s, i, j, status, post = 0, repost = 0, test = 0, is_daterange_set = 0;
+	int s, i, j, post = 0, repost = 0, test = 0, is_daterange_set = 0;
 	int install = 0, update = 0, already_read = 0;
 	int location = 0, error = 0;
 	int ret, found, crc_at_end, finished = 0;
@@ -1287,24 +1312,8 @@ int main(int argc, char **argv) {
 
 	scriptfile_fp = open_script_file(&conf);
 
-	for (i = 1; i < 20; i++) {
-		// allocate a socket
-		s = socket(AF_BLUETOOTH, SOCK_STREAM, BTPROTO_RFCOMM);
-
-		// set the connection parameters (who to connect to)
-		addr.rc_family = AF_BLUETOOTH;
-		addr.rc_channel = (uint8_t) 1;
-		str2ba(conf.BTAddress, &addr.rc_bdaddr);
-
-		// connect to server
-		status = connect(s, (struct sockaddr *) &addr, sizeof(addr));
-		if (status < 0) {
-			printf("Error connecting to %s\n", conf.BTAddress);
-			close(s);
-		} else
-			break;
-	}
-	if (status < 0) {
+	if (bt_connect(&conf, &addr, &s ) < 0) {
+		printf("Error connecting to %s\n", conf.BTAddress);
 		return (-1);
 	}
 
