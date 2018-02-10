@@ -569,8 +569,7 @@ unsigned char * get_timezone_in_seconds(unsigned char *tzhex) {
 	return tzhex;
 }
 
-int auto_set_dates(ConfType * conf, int * daterange, char * datefrom,
-		char * dateto)
+void auto_set_dates(ConfType * conf, char * datefrom, char * dateto)
 /*  If there are no dates set - get last updated date and go from there to NOW */
 {
 	time_t curtime;
@@ -590,10 +589,10 @@ int auto_set_dates(ConfType * conf, int * daterange, char * datefrom,
 	second = loctime->tm_sec;
 	sprintf(dateto, "%04d-%02d-%02d %02d:%02d:00", year, month, day, hour,
 			minute);
-	(*daterange) = 1;
+
 	if (verbose == 1)
 		printf("Auto set dates from %s to %s\n", datefrom, dateto);
-	return 1;
+
 }
 
 //Set a value depending on inverter
@@ -814,7 +813,7 @@ time_t ConvertStreamtoTime(unsigned char * stream, int length, time_t * value) {
 
 // Set switches to save lots of strcmps
 void SetSwitches(ConfType *conf, char * datefrom, char * dateto, int *location,
-		int *post, int *daterange, int *test) {
+		int *post, int *is_daterange_set, int *test) {
 	//Check if all location variables are set
 	if ((conf->latitude_f <= 180) && (conf->longitude_f <= 180))
 		(*location) = 1;
@@ -828,9 +827,9 @@ void SetSwitches(ConfType *conf, char * datefrom, char * dateto, int *location,
 	else
 		(*post) = 0;
 	if ((strlen(datefrom) > 0) && (strlen(dateto) > 0))
-		(*daterange) = 1;
+		(*is_daterange_set) = 1;
 	else
-		(*daterange) = 0;
+		(*is_daterange_set) = 0;
 }
 
 unsigned char *
@@ -1047,8 +1046,8 @@ void PrintHelp() {
 
 /* Init Config to default values */
 int ReadCommandConfig(ConfType *conf, int argc, char **argv, char * datefrom,
-		char * dateto, int * verbose, int * repost, int * test,
-		int * install, int * update) {
+		char * dateto, int * verbose, int * repost, int * test, int * install,
+		int * update) {
 	int i;
 
 	// these need validation checking at some stage TODO
@@ -1170,7 +1169,7 @@ size_t write_data(void *ptr, size_t size, size_t nmemb, void *stream) {
 	return written;
 }
 
-FILE* open_script_file(const ConfType* conf ) {
+FILE* open_script_file(const ConfType* conf) {
 	if (strlen(conf->File) > 0)
 		return fopen(conf->File, "r");
 	else
@@ -1194,8 +1193,7 @@ int main(int argc, char **argv) {
 	int archdatalen = 0;
 	int failedbluetooth = 0;
 	int terminated = 0;
-	int s, i, j, status, post = 0, repost = 0, test = 0,
-			daterange = 0;
+	int s, i, j, status, post = 0, repost = 0, test = 0, is_daterange_set = 0;
 	int install = 0, update = 0, already_read = 0;
 	int location = 0, error = 0;
 	int ret, found, crc_at_end, finished = 0;
@@ -1265,7 +1263,7 @@ int main(int argc, char **argv) {
 	if (GetInverterSetting(&conf) < 0)
 		exit(-1);
 	// set switches used through the program
-	SetSwitches(&conf, datefrom, dateto, &location, &post, &daterange,
+	SetSwitches(&conf, datefrom, dateto, &location, &post, &is_daterange_set,
 			&test);
 
 	// Set value for inverter type
@@ -1275,11 +1273,16 @@ int main(int argc, char **argv) {
 	// Get Local Timezone offset in seconds
 	get_timezone_in_seconds(tzhex);
 
-	if (daterange == 0) //auto set the dates
-		auto_set_dates(&conf, &daterange, datefrom, dateto);
-	else if (verbose == 1)
+	//auto set the dates
+	if (is_daterange_set == 0) {
+		auto_set_dates(&conf, datefrom, dateto);
+		is_daterange_set = 1;
+	}
+
+	if (verbose == 1)
 		printf("QUERY RANGE    from %s to %s\n", datefrom, dateto);
-	if (daterange == 1) {
+
+	if (is_daterange_set == 1) {
 		if (verbose == 1)
 			printf("Address %s\n", conf.BTAddress);
 
@@ -1315,7 +1318,7 @@ int main(int argc, char **argv) {
 		address[0] = conv(strtok(NULL, ":"));
 
 		while (!feof(scriptfile_fp)) {
-			start: if (fgets(line, 400, scriptfile_fp) != NULL) {	//read line from sma.in
+			start: if (fgets(line, 400, scriptfile_fp) != NULL) {//read line from sma.in
 				linenum++;
 				lineread = strtok(line, " ;");
 				if (!strcmp(lineread, "R")) {//See if line is something we need to receive
@@ -1389,7 +1392,7 @@ int main(int argc, char **argv) {
 						}
 					} while (found == 0);
 				}
-				if (!strcmp(lineread, "S")) {//See if line is something we need to send
+				if (!strcmp(lineread, "S")) { //See if line is something we need to send
 					cc = 0;
 					do {
 						lineread = strtok(NULL, " ;");
@@ -1476,7 +1479,7 @@ int main(int argc, char **argv) {
 
 						case 13: // $TIMEFROM1
 							// get report time and convert
-							if (daterange == 1) {
+							if (is_daterange_set == 1) {
 								if (strptime(datefrom, "%Y-%m-%d %H:%M:%S", &tm)
 										== 0) {
 									printf("Time Coversion Error\n");
@@ -1511,7 +1514,7 @@ int main(int argc, char **argv) {
 							break;
 
 						case 14: // $TIMETO1
-							if (daterange == 1) {
+							if (is_daterange_set == 1) {
 								if (strptime(dateto, "%Y-%m-%d %H:%M:%S", &tm)
 										== 0) {
 									printf("Time Coversion Error\n");
@@ -1544,7 +1547,7 @@ int main(int argc, char **argv) {
 							break;
 
 						case 15: // $TIMEFROM2
-							if (daterange == 1) {
+							if (is_daterange_set == 1) {
 								strptime(datefrom, "%Y-%m-%d %H:%M:%S", &tm);
 								tm.tm_isdst = -1;
 								fromtime = mktime(&tm) - 86400;
@@ -1574,7 +1577,7 @@ int main(int argc, char **argv) {
 							break;
 
 						case 16: // $TIMETO2
-							if (daterange == 1) {
+							if (is_daterange_set == 1) {
 								strptime(dateto, "%Y-%m-%d %H:%M:%S", &tm);
 
 								tm.tm_isdst = -1;
@@ -1654,7 +1657,7 @@ int main(int argc, char **argv) {
 						}
 
 					} while (strcmp(lineread, "$END"));
-				last_sent = (unsigned char *) realloc(last_sent,
+					last_sent = (unsigned char *) realloc(last_sent,
 							sizeof(unsigned char) * (cc));
 					memcpy(last_sent, fl, cc);
 					write(s, fl, cc);
@@ -1662,7 +1665,7 @@ int main(int argc, char **argv) {
 					//check_send_error( &conf, &s, &rr, received, cc, last_sent, &terminated, &already_read );
 				}
 
-				if (!strcmp(lineread, "E")) {//See if line is something we need to extract
+				if (!strcmp(lineread, "E")) { //See if line is something we need to extract
 					cc = 0;
 					do {
 						lineread = strtok(NULL, " ;");
@@ -1991,12 +1994,12 @@ int main(int argc, char **argv) {
 
 					while (strcmp(lineread, "$END"));
 				}
-				if (!strcmp(lineread, ":init")) {//See if line is something we need to extract
+				if (!strcmp(lineread, ":init")) { //See if line is something we need to extract
 					initstarted = 1;
 					returnpos = ftell(scriptfile_fp);
 					returnline = linenum;
 				}
-				if (!strcmp(lineread, ":setup")) {//See if line is something we need to extract
+				if (!strcmp(lineread, ":setup")) { //See if line is something we need to extract
 					setupstarted = 1;
 					returnpos = ftell(scriptfile_fp);
 					returnline = linenum;
