@@ -15,7 +15,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
-/* compile gcc -lbluetooth -lmysqlclient -g -o smatool smatool.c */
+/* compile gcc -lbluetooth -g -o smatool smatool.c */
 
 #define _XOPEN_SOURCE /* glibc needs this */
 #include <stdio.h>
@@ -53,10 +53,6 @@ typedef struct{
     char File[80];              /*--file     	-f 	*/
     float latitude_f;           /*--latitude  	-la 	*/
     float longitude_f;          /*--longitude 	-lo 	*/
-    char MySqlHost[40];         /*--mysqlhost   -h 	*/
-    char MySqlDatabase[20];     /*--mysqldb     -d 	*/
-    char MySqlUser[80];         /*--mysqluser   -user 	*/
-    char MySqlPwd[80];          /*--mysqlpwd    -pwd 	*/
     char PVOutputURL[80];       /*--pvouturl    -url 	*/
     char PVOutputKey[80];       /*--pvoutkey    -key 	*/
     char PVOutputSid[20];       /*--pvoutsid    -sid 	*/
@@ -1124,10 +1120,6 @@ void InitConfig( ConfType *conf, char * datefrom, char * dateto )
     strcpy( conf->File, "sma.in.new" );  
     conf->latitude_f = 999 ;  
     conf->longitude_f = 999 ;  
-    strcpy( conf->MySqlHost, "localhost" );  
-    strcpy( conf->MySqlDatabase, "smatool" );  
-    strcpy( conf->MySqlUser, "" );  
-    strcpy( conf->MySqlPwd, "" );  
     strcpy( conf->PVOutputURL, "http://pvoutput.org/service/r2/addstatus.jsp" );  
     strcpy( conf->PVOutputKey, "" );  
     strcpy( conf->PVOutputSid, "" );  
@@ -1187,14 +1179,6 @@ int GetConfig( ConfType *conf )
                        conf->latitude_f = atof(value) ;  
                     if( strcmp( variable, "Longitude" ) == 0 )
                        conf->longitude_f = atof(value) ;  
-                    if( strcmp( variable, "MySqlHost" ) == 0 )
-                       strcpy( conf->MySqlHost, value );  
-                    if( strcmp( variable, "MySqlDatabase" ) == 0 )
-                       strcpy( conf->MySqlDatabase, value );  
-                    if( strcmp( variable, "MySqlUser" ) == 0 )
-                       strcpy( conf->MySqlUser, value );  
-                    if( strcmp( variable, "MySqlPwd" ) == 0 )
-                       strcpy( conf->MySqlPwd, value );  
                     if( strcmp( variable, "PVOutputURL" ) == 0 )
                        strcpy( conf->PVOutputURL, value );  
                     if( strcmp( variable, "PVOutputKey" ) == 0 )
@@ -1289,8 +1273,7 @@ void PrintHelp()
     printf( "  -c,  --config CONFIGFILE                 Set config file default smatool.conf\n" );
     printf( "       --test                              Run in test mode - don't update data\n" );
     printf( "\n" );
-    printf( "Dates are no longer required - defaults to last update if using mysql\n" );
-    printf( "or 2000 to now if not using mysql\n" );
+    printf( "Dates are no longer required - defaults to 2000 to now\n" );
     printf( "  -from  --datefrom YYYY-DD-MM HH:MM:00    Date range from date\n" );
     printf( "  -to  --dateto YYYY-DD-MM HH:MM:00        Date range to date\n" );
     printf( "\n" );
@@ -1304,15 +1287,6 @@ void PrintHelp()
     printf( "queried in the dark\n" );
     printf( "  -lat,  --latitude LATITUDE               location latitude -180 to 180 deg\n" );
     printf( "  -lon,  --longitude LONGITUDE             location longitude -90 to 90 deg\n" );
-    printf( "Mysql database information\n" );
-    printf( "  -H,  --mysqlhost MYSQLHOST               mysql host default localhost\n");
-    printf( "  -D,  --mysqldb MYSQLDATBASE              mysql database default smatool\n");
-    printf( "  -U,  --mysqluser MYSQLUSER               mysql user\n");
-    printf( "  -P,  --mysqlpwd MYSQLPASSWORD            mysql password\n");
-    printf( "Mysql tables can be installed using INSTALL you may have to use a higher \n" );
-    printf( "privelege user to allow the creation of databases and tables, use command line \n" );
-    printf( "       --INSTALL                           install mysql data tables\n");
-    printf( "       --UPDATE                            update mysql data tables\n");
     printf( "PVOutput.org (A free solar information system) Configs\n" );
     printf( "  -url,  --pvouturl PVOUTURL               pvoutput.org live url\n");
     printf( "  -key,  --pvoutkey PVOUTKEY               pvoutput.org key\n");
@@ -1397,30 +1371,6 @@ int ReadCommandConfig( ConfType *conf, int argc, char **argv, char * datefrom, c
 		conf->longitude_f=atof(argv[i]);
 	    }
 	}
-	else if ((strcmp(argv[i],"-H")==0)||(strcmp(argv[i],"--mysqlhost")==0)){
-            i++;
-            if (i<argc){
-		strcpy(conf->MySqlHost,argv[i]);
-            }
-        }
-	else if ((strcmp(argv[i],"-D")==0)||(strcmp(argv[i],"--mysqlcwdb")==0)){
-            i++;
-            if (i<argc){
-		strcpy(conf->MySqlDatabase,argv[i]);
-            }
-        }
-	else if ((strcmp(argv[i],"-U")==0)||(strcmp(argv[i],"--mysqluser")==0)){
-            i++;
-            if (i<argc){
-		strcpy(conf->MySqlUser,argv[i]);
-            }
-        }
-	else if ((strcmp(argv[i],"-P")==0)||(strcmp(argv[i],"--mysqlpwd")==0)){
-            i++;
-            if (i<argc){
-		strcpy(conf->MySqlPwd,argv[i]);
-            }
-	}				
 	else if ((strcmp(argv[i],"-url")==0)||(strcmp(argv[i],"--pvouturl")==0)){
 	    i++;
 	    if(i<argc){
