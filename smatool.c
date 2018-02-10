@@ -1177,7 +1177,7 @@ FILE* open_script_file(const ConfType* conf) {
 }
 
 int bt_connect(const ConfType* conf, struct sockaddr_rc* bt_addr,
-		int* bt_socket ) {
+		int* bt_socket) {
 
 	int max_tries = 20;
 	int is_connected;
@@ -1211,17 +1211,18 @@ void convert_bt_address_to_array(unsigned char bt_address[6], ConfType* conf) {
 	bt_address[0] = conv(strtok(NULL, ":"));
 }
 
-int add_to_send_string( unsigned char *send_string, int current_pos,
-		unsigned char *data_array, int count ) {
+int add_to_send_string(unsigned char *send_string, int current_pos,
+		unsigned char *data_array, int count) {
 
 	for (int i = 0; i < count; i++) {
-		send_string[current_pos+i] = data_array[i];
+		send_string[current_pos + i] = data_array[i];
 	}
 
 	return count;
 }
 
-int add_char_to_send_string(unsigned char *send_string, int current_pos, unsigned char chr) {
+int add_char_to_send_string(unsigned char *send_string, int current_pos,
+		unsigned char chr) {
 	send_string[cc] = chr;
 	return 1;
 }
@@ -1337,7 +1338,7 @@ int main(int argc, char **argv) {
 
 	scriptfile_fp = open_script_file(&conf);
 
-	if (bt_connect(&conf, &addr, &s ) < 0) {
+	if (bt_connect(&conf, &addr, &s) < 0) {
 		printf("Error connecting to %s\n", conf.BTAddress);
 		return (-1);
 	}
@@ -1360,15 +1361,18 @@ int main(int argc, char **argv) {
 						break;
 
 					case 1: // $ADDR
-						cc += add_to_send_string( fl, cc, bt_address, sizeof(bt_address));
+						cc += add_to_send_string(fl, cc, bt_address,
+								sizeof(bt_address));
 						break;
 
 					case 3: // $SER
-						cc += add_to_send_string(fl, cc, serial, sizeof(serial));
+						cc += add_to_send_string(fl, cc, serial,
+								sizeof(serial));
 						break;
 
 					case 7: // $ADD2
-						cc += add_to_send_string( fl, cc, address2, sizeof(address2));
+						cc += add_to_send_string(fl, cc, address2,
+								sizeof(address2));
 						break;
 
 					case 8: // $CHAN
@@ -1421,15 +1425,18 @@ int main(int argc, char **argv) {
 						break;
 
 					case 1: // $ADDR
-						cc += add_to_send_string( fl, cc, bt_address, sizeof(bt_address));
+						cc += add_to_send_string(fl, cc, bt_address,
+								sizeof(bt_address));
 						break;
 
 					case 3: // $SER
-						cc += add_to_send_string(fl, cc, serial, sizeof(serial));
+						cc += add_to_send_string(fl, cc, serial,
+								sizeof(serial));
 						break;
 
 					case 7: // $ADD2
-						cc += add_to_send_string( fl, cc, address2, sizeof(address2));
+						cc += add_to_send_string(fl, cc, address2,
+								sizeof(address2));
 						break;
 
 					case 2: // $TIME
