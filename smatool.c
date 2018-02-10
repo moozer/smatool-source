@@ -15,7 +15,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
-/* compile gcc -lbluetooth -lcurl -lmysqlclient -g -o smatool smatool.c */
+/* compile gcc -lbluetooth -lmysqlclient -g -o smatool smatool.c */
 
 #define _XOPEN_SOURCE /* glibc needs this */
 #include <stdio.h>
@@ -29,7 +29,7 @@
 #include <time.h>
 #include <assert.h>
 #include <sys/types.h>
-#include <curl/curl.h>
+#include <sys/time.h>
 
 /*
  * u16 represents an unsigned 16-bit number.  Adjust the typedef for
@@ -1512,7 +1512,6 @@ int main(int argc, char **argv)
         int  initstarted=0,setupstarted=0,rangedatastarted=0;
         long returnpos;
         int returnline;
-        char compurl[400];  //seg error on curl fix 2012.01.14
 	char datefrom[100];
 	char dateto[100];
         int  pass_i;
@@ -1556,9 +1555,6 @@ int main(int argc, char **argv)
    } *archdatalist;
 
     char sunrise_time[6],sunset_time[6];
-   
-    CURL *curl;
-    CURLcode result;
 
     memset(received,0,1024);
     last_sent = (unsigned  char *)malloc( sizeof( unsigned char ));
