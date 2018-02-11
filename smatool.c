@@ -914,7 +914,6 @@ int main(int argc, char **argv) {
 	float dtotal;
 	float gtotal;
 	float ptotal;
-	float strength;
 
 	struct archdata_type {
 		time_t date;
@@ -1537,9 +1536,8 @@ int main(int argc, char **argv) {
 
 						break;
 					case 20: // SIGNAL signal strength
-
-						strength = (received[22] * 100.0) / 0xff;
 						if (verbose == 1) {
+							float strength = (received[22] * 100.0) / 0xff;
 							printf("bluetooth signal = %.0f%%\n", strength);
 						}
 						break;
